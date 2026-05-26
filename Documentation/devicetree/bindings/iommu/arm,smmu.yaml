@@ -35,6 +35,7 @@ properties:
       - description: Qcom SoCs implementing "qcom,smmu-500" and "arm,mmu-500"
         items:
           - enum:
+              - qcom,eliza-smmu-500
               - qcom,glymur-smmu-500
               - qcom,kaanapali-smmu-500
               - qcom,milos-smmu-500
@@ -92,6 +93,7 @@ properties:
         items:
           - enum:
               - qcom,glymur-smmu-500
+              - qcom,hawi-smmu-500
               - qcom,kaanapali-smmu-500
               - qcom,milos-smmu-500
               - qcom,qcm2290-smmu-500
@@ -240,6 +242,15 @@ properties:
   power-domains:
     minItems: 1
     maxItems: 3
+
+  interconnects:
+    maxItems: 1
+    description:
+      For adding interconnect path to the SMMU register space. On some SoCs
+      the SMMU registers are only accessible after a bandwidth vote has been
+      placed on the interconnect fabric. This property ensures votes for bandwidth
+      on this path before accessing any SMMU registers and releases the vote
+      on runtime suspend scenario.
 
   nvidia,memory-controller:
     description: |

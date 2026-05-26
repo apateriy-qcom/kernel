@@ -10,53 +10,23 @@
 #include <sound/soc-acpi-intel-match.h>
 #include "soc-acpi-intel-sdw-mockup-match.h"
 
+static const struct snd_soc_acpi_codecs nvl_essx_83x6 = {
+	.num_codecs = 3,
+	.codecs = { "ESSX8316", "ESSX8326", "ESSX8336"},
+};
+
 struct snd_soc_acpi_mach snd_soc_acpi_intel_nvl_machines[] = {
+	{
+		.comp_ids = &nvl_essx_83x6,
+		.drv_name = "sof-essx8336",
+		.sof_tplg_filename = "sof-nvl-es8336", /* the tplg suffix is added at run time */
+		.tplg_quirk_mask = SND_SOC_ACPI_TPLG_INTEL_SSP_NUMBER |
+					SND_SOC_ACPI_TPLG_INTEL_SSP_MSB |
+					SND_SOC_ACPI_TPLG_INTEL_DMIC_NUMBER,
+	},
 	{},
 };
 EXPORT_SYMBOL_GPL(snd_soc_acpi_intel_nvl_machines);
-
-/*
- * Multi-function codecs with three endpoints created for
- * headset, amp and dmic functions.
- */
-static const struct snd_soc_acpi_endpoint rt_mf_endpoints[] = {
-	{
-		.num = 0,
-		.aggregated = 0,
-		.group_position = 0,
-		.group_id = 0,
-	},
-	{
-		.num = 1,
-		.aggregated = 0,
-		.group_position = 0,
-		.group_id = 0,
-	},
-	{
-		.num = 2,
-		.aggregated = 0,
-		.group_position = 0,
-		.group_id = 0,
-	},
-};
-
-static const struct snd_soc_acpi_adr_device rt722_3_single_adr[] = {
-	{
-		.adr = 0x000330025d072201ull,
-		.num_endpoints = ARRAY_SIZE(rt_mf_endpoints),
-		.endpoints = rt_mf_endpoints,
-		.name_prefix = "rt722"
-	}
-};
-
-static const struct snd_soc_acpi_link_adr nvl_rt722_l3[] = {
-	{
-		.mask = BIT(3),
-		.num_adr = ARRAY_SIZE(rt722_3_single_adr),
-		.adr_d = rt722_3_single_adr,
-	},
-	{}
-};
 
 /* this table is used when there is no I2S codec present */
 struct snd_soc_acpi_mach snd_soc_acpi_intel_nvl_sdw_machines[] = {
@@ -78,12 +48,6 @@ struct snd_soc_acpi_mach snd_soc_acpi_intel_nvl_sdw_machines[] = {
 		.links = sdw_mockup_mic_headset_1amp,
 		.drv_name = "sof_sdw",
 		.sof_tplg_filename = "sof-nvl-rt715-rt711-rt1308-mono.tplg",
-	},
-	{
-		.link_mask = BIT(3),
-		.links = nvl_rt722_l3,
-		.drv_name = "sof_sdw",
-		.sof_tplg_filename = "sof-nvl-rt722.tplg",
 	},
 	{},
 };
