@@ -378,6 +378,11 @@
 	};
 
 	firmware: firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+
 		scm {
 			compatible = "qcom,scm-nord",
 				     "qcom,scm";
