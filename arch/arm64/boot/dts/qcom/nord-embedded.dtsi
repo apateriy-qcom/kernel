@@ -2552,7 +2552,6 @@
 		qcom,bcm-voters = <&apps_bcm_voter>;
 	};
 };
-
 &tlmm {
 	aud_intfc8_mi2s_active: aud-intfc8-mi2s-active-state {
 		data-pins {
@@ -3448,6 +3447,20 @@
 			     "qup-config";
 	pinctrl-0 = <&qup_uart17_default>;
 	pinctrl-names = "default";
+	status = "okay";
+
+	bluetooth {
+		compatible = "qcom,wcn7850-bt";
+		max-speed = <3200000>;
+
+		vddaon-supply = <&vreg_pmu_aon_0p59>;
+		vddwlcx-supply = <&vreg_pmu_wlcx_0p8>;
+		vddwlmx-supply = <&vreg_pmu_wlmx_0p85>;
+		vddrfacmn-supply = <&vreg_pmu_rfa_cmn>;
+		vddrfa0p8-supply = <&vreg_pmu_rfa_0p8>;
+		vddrfa1p2-supply = <&vreg_pmu_rfa_1p2>;
+		vddrfa1p8-supply = <&vreg_pmu_rfa_1p8>;
+	};
 };
 
 &uart18 {
