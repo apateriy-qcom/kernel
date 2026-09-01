@@ -111,12 +111,16 @@ static bool qcom_pas_tee_supported(struct device *dev, u32 pas_id)
 	};
 	int ret;
 
+	pr_err("PAS_DBG: %s: pas_id=%d\n", __func__, pas_id);
+
 	ret = tee_client_invoke_func(data->ctx, &inv_arg, param);
 	if (ret < 0 || inv_arg.ret != 0) {
 		dev_err(dev, "PAS not supported, pas_id: %d, ret: %d, err: 0x%x\n",
 			pas_id, ret, inv_arg.ret);
 		return false;
 	}
+
+	pr_err("PAS_DBG: %s: pas_id=%d supported\n", __func__, pas_id);
 
 	return true;
 }
@@ -143,6 +147,8 @@ static int qcom_pas_tee_init_image(struct device *dev, u32 pas_id,
 	struct tee_shm *mdata_shm;
 	u8 *mdata_buf = NULL;
 	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u size=%zu\n", __func__, pas_id, size);
 
 	mdata_shm = tee_shm_alloc_kernel_buf(data->ctx, size);
 	if (IS_ERR(mdata_shm)) {
@@ -174,6 +180,8 @@ static int qcom_pas_tee_init_image(struct device *dev, u32 pas_id,
 	else
 		tee_shm_free(mdata_shm);
 
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
+
 	return ret;
 }
 
@@ -200,12 +208,17 @@ static int qcom_pas_tee_mem_setup(struct device *dev, u32 pas_id,
 	};
 	int ret;
 
+	pr_err("PAS_DBG: %s: pas_id=%u addr=%pa size=%pa\n", __func__,
+	       pas_id, &addr, &size);
+
 	ret = tee_client_invoke_func(data->ctx, &inv_arg, param);
 	if (ret < 0 || inv_arg.ret != 0) {
 		dev_err(dev, "PAS mem setup failed, pas_id: %d, ret: %d, err: 0x%x\n",
 			pas_id, ret, inv_arg.ret);
 		return ret ?: -EINVAL;
 	}
+
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
 
 	return ret;
 }
@@ -235,6 +248,9 @@ static void *qcom_pas_tee_get_rsc_table(struct device *dev,
 	};
 	void *rt_buf = NULL;
 	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u input_rt_size=%zu\n", __func__,
+	       ctx->pas_id, input_rt_size);
 
 	ret = tee_client_invoke_func(data->ctx, &inv_arg, param);
 	if (ret < 0 || inv_arg.ret != 0) {
@@ -307,12 +323,17 @@ static int __qcom_pas_tee_auth_and_reset(struct device *dev, u32 pas_id,
 	};
 	int ret;
 
+	pr_err("PAS_DBG: %s: pas_id=%u mem_phys=%pa mem_size=%zu\n", __func__,
+	       pas_id, &mem_phys, mem_size);
+
 	ret = tee_client_invoke_func(data->ctx, &inv_arg, param);
 	if (ret < 0 || inv_arg.ret != 0) {
 		dev_err(dev, "PAS auth reset failed, pas_id: %d, ret: %d, err: 0x%x\n",
 			pas_id, ret, inv_arg.ret);
 		return ret ?: -EINVAL;
 	}
+
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
 
 	return ret;
 }
@@ -347,12 +368,16 @@ static int qcom_pas_tee_set_remote_state(struct device *dev, u32 state,
 	};
 	int ret;
 
+	pr_err("PAS_DBG: %s: pas_id=%u state=%u\n", __func__, pas_id, state);
+
 	ret = tee_client_invoke_func(data->ctx, &inv_arg, param);
 	if (ret < 0 || inv_arg.ret != 0) {
 		dev_err(dev, "PAS shutdown failed, pas_id: %d, ret: %d, err: 0x%x\n",
 			pas_id, ret, inv_arg.ret);
 		return ret ?: -EINVAL;
 	}
+
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
 
 	return ret;
 }
@@ -373,12 +398,16 @@ static int qcom_pas_tee_shutdown(struct device *dev, u32 pas_id)
 	};
 	int ret;
 
+	pr_err("PAS_DBG: %s: pas_id=%u\n", __func__, pas_id);
+
 	ret = tee_client_invoke_func(data->ctx, &inv_arg, param);
 	if (ret < 0 || inv_arg.ret != 0) {
 		dev_err(dev, "PAS shutdown failed, pas_id: %d, ret: %d, err: 0x%x\n",
 			pas_id, ret, inv_arg.ret);
 		return ret ?: -EINVAL;
 	}
+
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
 
 	return ret;
 }
@@ -387,6 +416,8 @@ static void qcom_pas_tee_metadata_release(struct device *dev,
 					  struct qcom_pas_context *ctx)
 {
 	struct tee_shm *mdata_shm = ctx->ptr;
+
+	pr_err("PAS_DBG: %s: pas_id=%u\n", __func__, ctx->pas_id);
 
 	tee_shm_free(mdata_shm);
 }
@@ -440,6 +471,8 @@ static int qcom_pas_tee_probe(struct tee_client_device *pas_dev)
 	qcom_pas_ops_tee.dev = dev;
 	qcom_pas_ops_register(&qcom_pas_ops_tee);
 
+	pr_err("PAS_DBG: %s: tee-backed PAS service registered\n", __func__);
+
 	return ret;
 out_ctx:
 	tee_client_close_context(data->ctx);
@@ -451,6 +484,8 @@ static void qcom_pas_tee_remove(struct tee_client_device *pas_dev)
 {
 	struct device *dev = &pas_dev->dev;
 	struct qcom_pas_tee_private *data = dev_get_drvdata(dev);
+
+	pr_err("PAS_DBG: %s: tee-backed PAS service unregistered\n", __func__);
 
 	qcom_pas_ops_unregister();
 	tee_client_close_session(data->ctx, data->session_id);

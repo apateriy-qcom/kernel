@@ -257,6 +257,8 @@ static int wcnss_start(struct rproc *rproc)
 	wcnss_indicate_nv_download(wcnss);
 	wcnss_configure_iris(wcnss);
 
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d\n", __func__, rproc->name, WCNSS_PAS_ID);
+
 	ret = qcom_pas_auth_and_reset(WCNSS_PAS_ID);
 	if (ret) {
 		dev_err(wcnss->dev,
@@ -275,6 +277,8 @@ static int wcnss_start(struct rproc *rproc)
 	}
 
 	ret = 0;
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=%d\n", __func__, rproc->name, WCNSS_PAS_ID, ret);
 
 disable_iris:
 	qcom_iris_disable(wcnss->iris);
@@ -314,6 +318,8 @@ static int wcnss_stop(struct rproc *rproc)
 	ret = qcom_pas_shutdown(WCNSS_PAS_ID);
 	if (ret)
 		dev_err(wcnss->dev, "failed to shutdown: %d\n", ret);
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=%d\n", __func__, rproc->name, WCNSS_PAS_ID, ret);
 
 	return ret;
 }
@@ -556,6 +562,8 @@ static int wcnss_probe(struct platform_device *pdev)
 	int ret;
 
 	data = of_device_get_match_data(&pdev->dev);
+
+	pr_err("PAS_DBG: %s: dev=%s pas_id=%d\n", __func__, dev_name(&pdev->dev), WCNSS_PAS_ID);
 
 	if (!qcom_pas_is_available())
 		return -EPROBE_DEFER;

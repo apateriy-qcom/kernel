@@ -678,6 +678,8 @@ static int qcom_pas_unprepare(struct rproc *rproc)
 {
 	struct qcom_pas *pas = rproc->priv;
 
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d\n", __func__, rproc->name, pas->pas_id);
+
 	/*
 	 * qcom_pas_load() did pass pas_metadata to the SCM driver for storing
 	 * metadata context. It might have been released already if
@@ -695,6 +697,9 @@ static int qcom_pas_load(struct rproc *rproc, const struct firmware *fw)
 {
 	struct qcom_pas *pas = rproc->priv;
 	int ret;
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d dtb_pas_id=%d\n", __func__,
+	       rproc->name, pas->pas_id, pas->dtb_pas_id);
 
 	/* Store firmware handle to be used in qcom_pas_start() */
 	pas->firmware = fw;
@@ -719,6 +724,8 @@ static int qcom_pas_load(struct rproc *rproc, const struct firmware *fw)
 			goto release_dtb_metadata;
 	}
 
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=0\n", __func__, rproc->name, pas->pas_id);
+
 	return 0;
 
 release_dtb_metadata:
@@ -726,6 +733,8 @@ release_dtb_metadata:
 		qcom_pas_metadata_release(pas->dtb_pas_ctx);
 
 	release_firmware(pas->dtb_firmware);
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=%d\n", __func__, rproc->name, pas->pas_id, ret);
 
 	return ret;
 }
@@ -750,6 +759,9 @@ static int qcom_pas_start(struct rproc *rproc)
 {
 	struct qcom_pas *pas = rproc->priv;
 	int ret;
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d dtb_pas_id=%d\n", __func__,
+	       rproc->name, pas->pas_id, pas->dtb_pas_id);
 
 	if (pas->cluster && !pas->is_cluster_root) {
 		ret = qcom_pas_cluster_wait_for_root(pas);
@@ -833,6 +845,8 @@ static int qcom_pas_start(struct rproc *rproc)
 	/* firmware is used to pass reference from qcom_pas_start(), drop it now */
 	pas->firmware = NULL;
 
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=0\n", __func__, rproc->name, pas->pas_id);
+
 	return 0;
 
 unmap_carveout:
@@ -863,6 +877,8 @@ disable_irqs:
 	/* firmware is used to pass reference from qcom_pas_start(), drop it now */
 	pas->firmware = NULL;
 
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=%d\n", __func__, rproc->name, pas->pas_id, ret);
+
 	return ret;
 }
 
@@ -884,6 +900,9 @@ static int qcom_pas_stop(struct rproc *rproc)
 	struct qcom_pas *pas = rproc->priv;
 	int handover;
 	int ret;
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d dtb_pas_id=%d\n", __func__,
+	       rproc->name, pas->pas_id, pas->dtb_pas_id);
 
 	if (pas->cluster && pas->is_cluster_root) {
 		mutex_lock(&pas->cluster->lock);
@@ -936,6 +955,8 @@ static int qcom_pas_stop(struct rproc *rproc)
 
 	if (pas->cluster)
 		qcom_pas_cluster_stop_complete(pas);
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=%d\n", __func__, rproc->name, pas->pas_id, ret);
 
 	return ret;
 }
@@ -997,6 +1018,7 @@ static int qcom_pas_parse_firmware(struct rproc *rproc, const struct firmware *f
 	 */
 	output_rt = qcom_pas_get_rsc_table(pas->pas_ctx, table, table_sz, &output_rt_size);
 	ret = IS_ERR(output_rt) ? PTR_ERR(output_rt) : 0;
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d ret=%d\n", __func__, rproc->name, pas->pas_id, ret);
 	if (ret) {
 		dev_err(pas->dev, "Error in getting resource table: %d\n", ret);
 		return ret;
@@ -1376,24 +1398,38 @@ static int qcom_pas_probe(struct platform_device *pdev)
 	int ret;
 
 	desc = of_device_get_match_data(&pdev->dev);
-	if (!desc)
+	if (!desc) {
+		pr_err("PAS_DBG: %s: dev=%s no match data\n", __func__, dev_name(&pdev->dev));
 		return -EINVAL;
+	}
 
-	if (!qcom_pas_is_available())
+	pr_err("PAS_DBG: %s: dev=%s pas_id=%d dtb_pas_id=%d sysmon_name=%s\n", __func__,
+	       dev_name(&pdev->dev), desc->pas_id, desc->dtb_pas_id, desc->sysmon_name);
+
+	if (!qcom_pas_is_available()) {
+		pr_err("PAS_DBG: %s: pas_id=%d PAS service not available, deferring\n", __func__,
+		       desc->pas_id);
 		return -EPROBE_DEFER;
+	}
 
 	fw_name = desc->firmware_name;
 	ret = of_property_read_string(pdev->dev.of_node, "firmware-name",
 				      &fw_name);
-	if (ret < 0 && ret != -EINVAL)
+	if (ret < 0 && ret != -EINVAL) {
+		pr_err("PAS_DBG: %s: pas_id=%d failed to read firmware-name, ret=%d\n", __func__,
+		       desc->pas_id, ret);
 		return ret;
+	}
 
 	if (desc->dtb_firmware_name) {
 		dtb_fw_name = desc->dtb_firmware_name;
 		ret = of_property_read_string_index(pdev->dev.of_node, "firmware-name", 1,
 						    &dtb_fw_name);
-		if (ret < 0 && ret != -EINVAL)
+		if (ret < 0 && ret != -EINVAL) {
+			pr_err("PAS_DBG: %s: pas_id=%d failed to read dtb firmware-name, ret=%d\n",
+			       __func__, desc->pas_id, ret);
 			return ret;
+		}
 	}
 
 	if (desc->minidump_id)
@@ -1403,6 +1439,8 @@ static int qcom_pas_probe(struct platform_device *pdev)
 
 	if (!rproc) {
 		dev_err(&pdev->dev, "unable to allocate remoteproc\n");
+		pr_err("PAS_DBG: %s: pas_id=%d devm_rproc_alloc failed\n", __func__,
+		       desc->pas_id);
 		return -ENOMEM;
 	}
 
@@ -1416,7 +1454,8 @@ static int qcom_pas_probe(struct platform_device *pdev)
 
 	ret = qcom_pas_cluster_init(pas, pdev->dev.of_node);
 	if (ret) {
-		pr_err("WASIM: cluster init faield for %s\n", rproc->name);
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_cluster_init failed, ret=%d\n", __func__,
+		       desc->pas_id, ret);
 		return ret;
 	}
 	rproc->cluster = pas->cluster;
@@ -1439,34 +1478,55 @@ static int qcom_pas_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, pas);
 
 	ret = device_init_wakeup(pas->dev, true);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d device_init_wakeup failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto free_rproc;
+	}
 
 	ret = qcom_pas_alloc_memory_region(pas);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_alloc_memory_region failed, ret=%d\n",
+		       __func__, pas->pas_id, ret);
 		goto free_rproc;
+	}
 
 	ret = qcom_pas_assign_memory_region(pas);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_assign_memory_region failed, ret=%d\n",
+		       __func__, pas->pas_id, ret);
 		goto free_rproc;
+	}
 
 	ret = qcom_pas_init_clock(pas);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_init_clock failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto unassign_mem;
+	}
 
 	ret = qcom_pas_init_regulator(pas);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_init_regulator failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto unassign_mem;
+	}
 
 	ret = qcom_pas_pds_attach(&pdev->dev, pas->proxy_pds, desc->proxy_pd_names);
-	if (ret < 0)
+	if (ret < 0) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_pds_attach failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto unassign_mem;
+	}
 	pas->proxy_pd_count = ret;
 
 	ret = qcom_q6v5_init(&pas->q6v5, pdev, rproc, desc->crash_reason_smem,
 			     desc->load_state, qcom_pas_handover);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_q6v5_init failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto detach_proxy_pds;
+	}
 
 	qcom_add_glink_subdev(rproc, &pas->glink_subdev, desc->ssr_name);
 	qcom_add_smd_subdev(rproc, &pas->smd_subdev);
@@ -1474,6 +1534,8 @@ static int qcom_pas_probe(struct platform_device *pdev)
 	pas->sysmon = qcom_add_sysmon_subdev(rproc, desc->sysmon_name, desc->ssctl_id);
 	if (IS_ERR(pas->sysmon)) {
 		ret = PTR_ERR(pas->sysmon);
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_add_sysmon_subdev failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto deinit_remove_pdm_smd_glink;
 	}
 
@@ -1483,6 +1545,8 @@ static int qcom_pas_probe(struct platform_device *pdev)
 						   pas->mem_phys, pas->mem_size);
 	if (IS_ERR(pas->pas_ctx)) {
 		ret = PTR_ERR(pas->pas_ctx);
+		pr_err("PAS_DBG: %s: pas_id=%d devm_qcom_pas_context_alloc failed, ret=%d\n",
+		       __func__, pas->pas_id, ret);
 		goto remove_ssr_sysmon;
 	}
 
@@ -1491,6 +1555,8 @@ static int qcom_pas_probe(struct platform_device *pdev)
 						       pas->dtb_mem_size);
 	if (IS_ERR(pas->dtb_pas_ctx)) {
 		ret = PTR_ERR(pas->dtb_pas_ctx);
+		pr_err("PAS_DBG: %s: pas_id=%d dtb devm_qcom_pas_context_alloc failed, ret=%d\n",
+		       __func__, pas->pas_id, ret);
 		goto remove_ssr_sysmon;
 	}
 
@@ -1501,12 +1567,21 @@ static int qcom_pas_probe(struct platform_device *pdev)
 		pas->rproc->state = RPROC_DETACHED;
 
 	ret = qcom_pas_setup_tmd(pas);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d qcom_pas_setup_tmd failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto remove_ssr_sysmon;
+	}
 
 	ret = rproc_add(rproc);
-	if (ret)
+	if (ret) {
+		pr_err("PAS_DBG: %s: pas_id=%d rproc_add failed, ret=%d\n", __func__,
+		       pas->pas_id, ret);
 		goto remove_setup_tmd;
+	}
+
+	pr_err("PAS_DBG: %s: rproc=%s pas_id=%d probe complete\n", __func__,
+	       rproc->name, pas->pas_id);
 
 	return 0;
 

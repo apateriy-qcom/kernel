@@ -2764,6 +2764,7 @@ static int qcom_scm_probe(struct platform_device *pdev)
 	__get_convention();
 
 	if (qcom_scm_is_pas_available()) {
+		pr_err("PAS_DBG: %s: registering scm-backed PAS service\n", __func__);
 		qcom_pas_ops_scm.dev = scm->dev;
 		qcom_pas_ops_register(&qcom_pas_ops_scm);
 	}

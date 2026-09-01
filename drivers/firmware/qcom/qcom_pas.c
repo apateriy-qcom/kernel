@@ -65,10 +65,18 @@ EXPORT_SYMBOL_GPL(devm_qcom_pas_context_alloc);
 int qcom_pas_init_image(u32 pas_id, const void *metadata, size_t size,
 			struct qcom_pas_context *ctx)
 {
+	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u size=%zu backend=%s\n", __func__,
+	       pas_id, size, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ops_ptr)
 		return -ENODEV;
 
-	return ops_ptr->init_image(ops_ptr->dev, pas_id, metadata, size, ctx);
+	ret = ops_ptr->init_image(ops_ptr->dev, pas_id, metadata, size, ctx);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_init_image);
 
@@ -80,6 +88,9 @@ void qcom_pas_metadata_release(struct qcom_pas_context *ctx)
 {
 	if (!ctx || !ctx->ptr || !ops_ptr)
 		return;
+
+	pr_err("PAS_DBG: %s: pas_id=%u backend=%s\n", __func__,
+	       ctx->pas_id, ops_ptr->drv_name);
 
 	ops_ptr->metadata_release(ops_ptr->dev, ctx);
 }
@@ -96,10 +107,18 @@ EXPORT_SYMBOL_GPL(qcom_pas_metadata_release);
  */
 int qcom_pas_mem_setup(u32 pas_id, phys_addr_t addr, phys_addr_t size)
 {
+	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u addr=%pa size=%pa backend=%s\n", __func__,
+	       pas_id, &addr, &size, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ops_ptr)
 		return -ENODEV;
 
-	return ops_ptr->mem_setup(ops_ptr->dev, pas_id, addr, size);
+	ret = ops_ptr->mem_setup(ops_ptr->dev, pas_id, addr, size);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_mem_setup);
 
@@ -149,13 +168,22 @@ struct resource_table *qcom_pas_get_rsc_table(struct qcom_pas_context *ctx,
 					      size_t input_rt_size,
 					      size_t *output_rt_size)
 {
+	struct resource_table *ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u input_rt_size=%zu backend=%s\n", __func__,
+	       ctx ? ctx->pas_id : 0, input_rt_size, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ctx)
 		return ERR_PTR(-EINVAL);
 	if (!ops_ptr)
 		return ERR_PTR(-ENODEV);
 
-	return ops_ptr->get_rsc_table(ops_ptr->dev, ctx, input_rt,
-				      input_rt_size, output_rt_size);
+	ret = ops_ptr->get_rsc_table(ops_ptr->dev, ctx, input_rt,
+				     input_rt_size, output_rt_size);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%ld\n", __func__, ctx->pas_id,
+	       IS_ERR(ret) ? PTR_ERR(ret) : 0);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_get_rsc_table);
 
@@ -168,10 +196,18 @@ EXPORT_SYMBOL_GPL(qcom_pas_get_rsc_table);
  */
 int qcom_pas_auth_and_reset(u32 pas_id)
 {
+	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u backend=%s\n", __func__,
+	       pas_id, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ops_ptr)
 		return -ENODEV;
 
-	return ops_ptr->auth_and_reset(ops_ptr->dev, pas_id);
+	ret = ops_ptr->auth_and_reset(ops_ptr->dev, pas_id);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_auth_and_reset);
 
@@ -196,12 +232,20 @@ EXPORT_SYMBOL_GPL(qcom_pas_auth_and_reset);
  */
 int qcom_pas_prepare_and_auth_reset(struct qcom_pas_context *ctx)
 {
+	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u backend=%s\n", __func__,
+	       ctx ? ctx->pas_id : 0, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ctx)
 		return -EINVAL;
 	if (!ops_ptr)
 		return -ENODEV;
 
-	return ops_ptr->prepare_and_auth_reset(ops_ptr->dev, ctx);
+	ret = ops_ptr->prepare_and_auth_reset(ops_ptr->dev, ctx);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, ctx->pas_id, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_prepare_and_auth_reset);
 
@@ -214,10 +258,18 @@ EXPORT_SYMBOL_GPL(qcom_pas_prepare_and_auth_reset);
  */
 int qcom_pas_set_remote_state(u32 state, u32 pas_id)
 {
+	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u state=%u backend=%s\n", __func__,
+	       pas_id, state, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ops_ptr)
 		return -ENODEV;
 
-	return ops_ptr->set_remote_state(ops_ptr->dev, state, pas_id);
+	ret = ops_ptr->set_remote_state(ops_ptr->dev, state, pas_id);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_set_remote_state);
 
@@ -229,10 +281,18 @@ EXPORT_SYMBOL_GPL(qcom_pas_set_remote_state);
  */
 int qcom_pas_shutdown(u32 pas_id)
 {
+	int ret;
+
+	pr_err("PAS_DBG: %s: pas_id=%u backend=%s\n", __func__,
+	       pas_id, ops_ptr ? ops_ptr->drv_name : "none");
+
 	if (!ops_ptr)
 		return -ENODEV;
 
-	return ops_ptr->shutdown(ops_ptr->dev, pas_id);
+	ret = ops_ptr->shutdown(ops_ptr->dev, pas_id);
+	pr_err("PAS_DBG: %s: pas_id=%u ret=%d\n", __func__, pas_id, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_shutdown);
 
@@ -245,15 +305,25 @@ EXPORT_SYMBOL_GPL(qcom_pas_shutdown);
  */
 bool qcom_pas_supported(u32 pas_id)
 {
-	if (!ops_ptr)
-		return false;
+	bool ret;
 
-	return ops_ptr->supported(ops_ptr->dev, pas_id);
+	if (!ops_ptr) {
+		pr_err("PAS_DBG: %s: pas_id=%u no backend registered\n", __func__, pas_id);
+		return false;
+	}
+
+	ret = ops_ptr->supported(ops_ptr->dev, pas_id);
+	pr_err("PAS_DBG: %s: pas_id=%u backend=%s supported=%d\n", __func__,
+	       pas_id, ops_ptr->drv_name, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_supported);
 
 bool qcom_pas_is_available(void)
 {
+	bool ret;
+
 	/*
 	 * The barrier for ops_ptr is intended to synchronize the data stores
 	 * for the ops data structure when client drivers are in parallel
@@ -263,7 +333,10 @@ bool qcom_pas_is_available(void)
 	 * threads to enter TZ for parallel bringup of co-processors during
 	 * boot.
 	 */
-	return !!smp_load_acquire(&ops_ptr);
+	ret = !!smp_load_acquire(&ops_ptr);
+	pr_err("PAS_DBG: %s: available=%d\n", __func__, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_is_available);
 
@@ -271,13 +344,18 @@ bool qcom_pas_is_tee_backed(void)
 {
 	/* Paired with smp_store_release() in qcom_pas_ops_register() */
 	struct qcom_pas_ops *ops = smp_load_acquire(&ops_ptr);
+	bool ret = ops && !strcmp(ops->drv_name, "qcom-pas-tee");
 
-	return ops && !strcmp(ops->drv_name, "qcom-pas-tee");
+	pr_err("PAS_DBG: %s: tee_backed=%d\n", __func__, ret);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(qcom_pas_is_tee_backed);
 
 void qcom_pas_ops_register(struct qcom_pas_ops *ops)
 {
+	pr_err("PAS_DBG: %s: registering backend=%s\n", __func__, ops->drv_name);
+
 	if (!qcom_pas_is_available())
 		/* Paired with smp_load_acquire() in qcom_pas_is_available() */
 		smp_store_release(&ops_ptr, ops);
@@ -288,6 +366,9 @@ EXPORT_SYMBOL_GPL(qcom_pas_ops_register);
 
 void qcom_pas_ops_unregister(void)
 {
+	pr_err("PAS_DBG: %s: unregistering backend=%s\n", __func__,
+	       ops_ptr ? ops_ptr->drv_name : "none");
+
 	/* Paired with smp_load_acquire() in qcom_pas_is_available() */
 	smp_store_release(&ops_ptr, NULL);
 }

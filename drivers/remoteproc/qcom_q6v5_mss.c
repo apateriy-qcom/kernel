@@ -1481,6 +1481,9 @@ static int q6v5_mpss_load(struct q6v5 *qproc)
 	}
 
 	if (qproc->need_pas_mem_setup) {
+		pr_err("PAS_DBG: %s: dev=%s pas_id=%d\n", __func__,
+		       dev_name(qproc->dev), MPSS_PAS_ID);
+
 		ret = qcom_pas_mem_setup(MPSS_PAS_ID, qproc->mpss_phys, qproc->mpss_size);
 		if (ret) {
 			dev_err(qproc->dev,
@@ -2077,6 +2080,9 @@ static int q6v5_probe(struct platform_device *pdev)
 	desc = of_device_get_match_data(&pdev->dev);
 	if (!desc)
 		return -EINVAL;
+
+	pr_err("PAS_DBG: %s: dev=%s need_mem_protection=%d\n", __func__,
+	       dev_name(&pdev->dev), desc->need_mem_protection);
 
 	if (desc->need_mem_protection && !qcom_pas_is_available())
 		return -EPROBE_DEFER;

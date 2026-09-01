@@ -8,6 +8,7 @@
 #include <linux/firmware/qcom/qcom_pas.h>
 #include <linux/firmware/qcom/qcom_scm.h>
 #include <linux/iommu.h>
+#include <linux/kernel.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_device.h>
@@ -184,6 +185,9 @@ int iris_fw_load(struct iris_core *core)
 						     cp_config->cp_nonpixel_start,
 						     cp_config->cp_nonpixel_size);
 		if (ret) {
+			pr_err("PAS_DBG: %s: pas_id=%d mem_protect_video_var failed ret=%d tee_backed=%d\n",
+			       __func__, IRIS_PAS_ID, ret, qcom_pas_is_tee_backed());
+
 			/*
 			 * When PAS is backed by OP-TEE, secure memory
 			 * protection is owned by the TEE and this SCM call is

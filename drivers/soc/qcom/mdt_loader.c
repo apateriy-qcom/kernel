@@ -282,6 +282,9 @@ static int __qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 		goto out;
 	}
 
+	pr_err("PAS_DBG: %s: dev=%s fw_name=%s pas_id=%d relocate=%d\n", __func__,
+	       dev_name(dev), fw_name, pas_id, relocate);
+
 	if (relocate) {
 		dev_err(dev, "%s: Before: pas_mem_setup scm call\n", __func__);
 		ret = qcom_pas_mem_setup(pas_id, mem_phys, max_addr - min_addr);
