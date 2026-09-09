@@ -666,10 +666,15 @@ static int really_probe(struct device *dev, const struct device_driver *drv)
 		 * wait_for_device_probe() right after that to avoid any races.
 		 */
 		dev_dbg(dev, "Driver %s force probe deferral\n", drv->name);
+		dev_err(dev, "COMMON_PROBE:Driver %s force probe deferral\n", drv->name);
 		return -EPROBE_DEFER;
 	}
 
 	link_ret = device_links_check_suppliers(dev);
+	if (link_ret)
+		pr_err("COMMON_PROBE:bus: '%s': %s: probing driver %s with device %s waiting for device_links_check_suppliers \n",
+                               drv->bus->name, __func__, drv->name, dev_name(dev));
+
 	if (link_ret == -EPROBE_DEFER)
 		return link_ret;
 

@@ -1135,9 +1135,11 @@ int device_links_check_suppliers(struct device *dev)
 		if (sup_fw) {
 			if (dev_is_best_effort(dev))
 				fwnode_ret = -EAGAIN;
-			else
+			else {
+				pr_err("COMMON_PROBE:wait for supplier %pfwP \n",sup_fw);
 				return dev_err_probe(dev, -EPROBE_DEFER,
 						     "wait for supplier %pfwf\n", sup_fw);
+			}
 		}
 	}
 
@@ -1158,6 +1160,7 @@ int device_links_check_suppliers(struct device *dev)
 			}
 
 			device_links_missing_supplier(dev);
+			pr_err("COMMON_PROBE:bus:%s %d dev:%s supplier:%s not ready \n",__func__,__LINE__,dev_name(dev),dev_name(link->supplier));
 			ret = dev_err_probe(dev, -EPROBE_DEFER,
 					    "supplier %s not ready\n", dev_name(link->supplier));
 			break;

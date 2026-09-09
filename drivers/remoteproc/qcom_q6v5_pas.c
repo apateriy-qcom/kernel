@@ -324,8 +324,10 @@ static int qcom_pas_cluster_init(struct qcom_pas *pas, struct device_node *np)
 	bool is_root;
 
 	root_node = of_parse_phandle(np, "qcom,cluster-root", 0);
-	if (!root_node)
+	if (!root_node) {
+		pas->cluster = NULL;
 		return 0;
+	}
 
 	is_root = root_node == np;
 
@@ -1413,8 +1415,10 @@ static int qcom_pas_probe(struct platform_device *pdev)
 	pas->rproc = rproc;
 
 	ret = qcom_pas_cluster_init(pas, pdev->dev.of_node);
-	if (ret)
+	if (ret) {
+		pr_err("WASIM: cluster init faield for %s\n", rproc->name);
 		return ret;
+	}
 	rproc->cluster = pas->cluster;
 
 	pas->minidump_id = desc->minidump_id;
