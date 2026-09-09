@@ -357,7 +357,7 @@ static bool ssctl_request_shutdown(struct qcom_sysmon *sysmon)
 	} else if (resp.resp.result) {
 		dev_err(sysmon->dev, "shutdown request rejected\n");
 	} else {
-		dev_dbg(sysmon->dev, "shutdown request completed\n");
+		pr_err("shutdown request completed\n");
 		acked = true;
 	}
 
@@ -409,7 +409,7 @@ static void ssctl_send_event(struct qcom_sysmon *sysmon,
 	else if (resp.resp.result)
 		dev_err(sysmon->dev, "subsystem event rejected\n");
 	else
-		dev_dbg(sysmon->dev, "subsystem event accepted\n");
+		pr_err("subsystem event accepted\n");
 }
 
 /**
@@ -601,7 +601,7 @@ static int sysmon_notify(struct notifier_block *nb, unsigned long event,
 	/* Skip non-running rprocs and the originating instance */
 	if (sysmon->state != SSCTL_SSR_EVENT_AFTER_POWERUP ||
 	    !strcmp(sysmon_event->subsys_name, sysmon->name)) {
-		dev_dbg(sysmon->dev, "not notifying %s\n", sysmon->name);
+		pr_err("not notifying %s\n", sysmon->name);
 		return NOTIFY_DONE;
 	}
 

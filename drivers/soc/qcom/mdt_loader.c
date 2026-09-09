@@ -265,6 +265,7 @@ static int __qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 			max_addr = ALIGN(phdr->p_paddr + phdr->p_memsz, SZ_4K);
 	}
 
+	dev_err(dev, "%s: Before: read_metadata\n", __func__);
 	metadata = qcom_mdt_read_metadata(fw, &metadata_len, fw_name, dev);
 	if (IS_ERR(metadata)) {
 		ret = PTR_ERR(metadata);
@@ -272,6 +273,7 @@ static int __qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 		goto out;
 	}
 
+	dev_err(dev, "%s: Before: pas_init_image scm call\n", __func__);
 	ret = qcom_pas_init_image(pas_id, metadata, metadata_len, ctx);
 	kfree(metadata);
 	if (ret) {
@@ -281,6 +283,7 @@ static int __qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 	}
 
 	if (relocate) {
+		dev_err(dev, "%s: Before: pas_mem_setup scm call\n", __func__);
 		ret = qcom_pas_mem_setup(pas_id, mem_phys, max_addr - min_addr);
 		if (ret) {
 			/* Unable to set up relocation */
@@ -290,6 +293,7 @@ static int __qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 	}
 
 out:
+	dev_err(dev, "%s: EOF: ret %d\n", __func__, ret);
 	return ret;
 }
 

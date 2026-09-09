@@ -975,7 +975,7 @@ static int qcom_pas_parse_firmware(struct rproc *rproc, const struct firmware *f
 
 	ret = rproc_elf_load_rsc_table(rproc, fw);
 	if (ret)
-		dev_dbg(&rproc->dev, "Failed to load resource table from firmware\n");
+		pr_err("Failed to load resource table from firmware\n");
 
 	table = rproc->table_ptr;
 	table_sz = rproc->table_sz;
