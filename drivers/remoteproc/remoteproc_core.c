@@ -1260,12 +1260,16 @@ static int rproc_start(struct rproc *rproc, const struct firmware *fw)
 	struct device *dev = &rproc->dev;
 	int ret;
 
+	pr_err("starting rproc %s\n", rproc->name);
+
 	/* load the ELF segments to memory */
+	pr_err("loading ELF segments for %s\n", rproc->name);
 	ret = rproc_load_segments(rproc, fw);
 	if (ret) {
 		dev_err(dev, "Failed to load program segments: %d\n", ret);
 		return ret;
 	}
+	pr_err("ELF segments loaded successfully for %s\n", rproc->name);
 
 	/*
 	 * The starting device has been given the rproc->cached_table as the
@@ -1275,12 +1279,18 @@ static int rproc_start(struct rproc *rproc, const struct firmware *fw)
 	 * this information to device memory. We also update the table_ptr so
 	 * that any subsequent changes will be applied to the loaded version.
 	 */
+	pr_err("finding loaded resource table for %s\n", rproc->name);
 	loaded_table = rproc_find_loaded_rsc_table(rproc, fw);
 	if (loaded_table) {
+		pr_err("copying resource table (size %zu) for %s\n",
+			rproc->table_sz, rproc->name);
 		memcpy(loaded_table, rproc->cached_table, rproc->table_sz);
 		rproc->table_ptr = loaded_table;
+	} else {
+		pr_err("no loaded resource table found for %s\n", rproc->name);
 	}
 
+	pr_err("preparing subdevices for %s\n", rproc->name);
 	ret = rproc_prepare_subdevices(rproc);
 	if (ret) {
 		dev_err(dev, "failed to prepare subdevices for %s: %d\n",
@@ -1289,13 +1299,16 @@ static int rproc_start(struct rproc *rproc, const struct firmware *fw)
 	}
 
 	/* power up the remote processor */
+	pr_err("calling ops->start() for %s\n", rproc->name);
 	ret = rproc->ops->start(rproc);
 	if (ret) {
 		dev_err(dev, "can't start rproc %s: %d\n", rproc->name, ret);
 		goto unprepare_subdevices;
 	}
+	pr_err("ops->start() succeeded for %s\n", rproc->name);
 
 	/* Start any subdevices for the remote processor */
+	pr_err("starting subdevices for %s\n", rproc->name);
 	ret = rproc_start_subdevices(rproc);
 	if (ret) {
 		dev_err(dev, "failed to probe subdevices for %s: %d\n",
@@ -1324,6 +1337,9 @@ static int __rproc_attach(struct rproc *rproc)
 	struct device *dev = &rproc->dev;
 	int ret;
 
+	pr_err("__rproc_attach: attaching to %s\n", rproc->name);
+
+	pr_err("__rproc_attach: preparing subdevices for %s\n", rproc->name);
 	ret = rproc_prepare_subdevices(rproc);
 	if (ret) {
 		dev_err(dev, "failed to prepare subdevices for %s: %d\n",
@@ -1332,14 +1348,17 @@ static int __rproc_attach(struct rproc *rproc)
 	}
 
 	/* Attach to the remote processor */
+	pr_err("__rproc_attach: calling rproc_attach_device for %s\n", rproc->name);
 	ret = rproc_attach_device(rproc);
 	if (ret) {
 		dev_err(dev, "can't attach to rproc %s: %d\n",
 			rproc->name, ret);
 		goto unprepare_subdevices;
 	}
+	pr_err("__rproc_attach: rproc_attach_device succeeded for %s\n", rproc->name);
 
 	/* Start any subdevices for the remote processor */
+	pr_err("__rproc_attach: starting subdevices for %s\n", rproc->name);
 	ret = rproc_start_subdevices(rproc);
 	if (ret) {
 		dev_err(dev, "failed to probe subdevices for %s: %d\n",
@@ -1350,6 +1369,7 @@ static int __rproc_attach(struct rproc *rproc)
 	rproc->state = RPROC_ATTACHED;
 
 	dev_info(dev, "remote processor %s is now attached\n", rproc->name);
+	pr_err("__rproc_attach: attach completed for %s\n", rproc->name);
 
 	return 0;
 
@@ -1370,35 +1390,50 @@ static int rproc_fw_boot(struct rproc *rproc, const struct firmware *fw)
 	const char *name = rproc->firmware;
 	int ret;
 
+	pr_err("rproc_fw_boot: starting firmware boot for %s\n", rproc->name);
+
+	pr_err("rproc_fw_boot: sanity checking firmware %s\n", name);
 	ret = rproc_fw_sanity_check(rproc, fw);
-	if (ret)
+	if (ret) {
+		pr_err("rproc_fw_boot: firmware sanity check failed: %d\n", ret);
 		return ret;
+	}
 
 	dev_info(dev, "Booting fw image %s, size %zd\n", name, fw->size);
+	pr_err("rproc_fw_boot: firmware size %zd bytes\n", fw->size);
 
 	/*
 	 * if enabling an IOMMU isn't relevant for this rproc, this is
 	 * just a nop
 	 */
+	pr_err("rproc_fw_boot: enabling IOMMU for %s\n", rproc->name);
 	ret = rproc_enable_iommu(rproc);
 	if (ret) {
 		dev_err(dev, "can't enable iommu: %d\n", ret);
+		pr_err("rproc_fw_boot: IOMMU enable failed: %d\n", ret);
 		return ret;
 	}
 
 	/* Prepare rproc for firmware loading if needed */
+	pr_err("rproc_fw_boot: preparing device for %s\n", rproc->name);
 	ret = rproc_prepare_device(rproc);
 	if (ret) {
 		dev_err(dev, "can't prepare rproc %s: %d\n", rproc->name, ret);
+		pr_err("rproc_fw_boot: device prepare failed: %d\n", ret);
 		goto disable_iommu;
 	}
 
+	pr_err("rproc_fw_boot: getting boot address for %s\n", rproc->name);
 	rproc->bootaddr = rproc_get_boot_addr(rproc, fw);
+	pr_err("rproc_fw_boot: boot address = 0x%llx\n", rproc->bootaddr);
 
 	/* Load resource table, core dump segment list etc from the firmware */
+	pr_err("rproc_fw_boot: parsing firmware for %s\n", rproc->name);
 	ret = rproc_parse_fw(rproc, fw);
-	if (ret)
+	if (ret) {
+		pr_err("rproc_fw_boot: firmware parse failed: %d\n", ret);
 		goto unprepare_rproc;
+	}
 
 	/* reset max_notifyid */
 	rproc->max_notifyid = -1;
@@ -1407,35 +1442,47 @@ static int rproc_fw_boot(struct rproc *rproc, const struct firmware *fw)
 	rproc->nb_vdev = 0;
 
 	/* handle fw resources which are required to boot rproc */
+	pr_err("rproc_fw_boot: handling resources for %s\n", rproc->name);
 	ret = rproc_handle_resources(rproc, rproc_loading_handlers);
 	if (ret) {
 		dev_err(dev, "Failed to process resources: %d\n", ret);
+		pr_err("rproc_fw_boot: resource handling failed: %d\n", ret);
 		goto clean_up_resources;
 	}
 
 	/* Allocate carveout resources associated to rproc */
+	pr_err("rproc_fw_boot: allocating carveouts for %s\n", rproc->name);
 	ret = rproc_alloc_registered_carveouts(rproc);
 	if (ret) {
 		dev_err(dev, "Failed to allocate associated carveouts: %d\n",
 			ret);
+		pr_err("rproc_fw_boot: carveout allocation failed: %d\n", ret);
 		goto clean_up_resources;
 	}
 
+	pr_err("rproc_fw_boot: calling rproc_start for %s\n", rproc->name);
 	ret = rproc_start(rproc, fw);
-	if (ret)
+	if (ret) {
+		pr_err("rproc_fw_boot: rproc_start failed: %d\n", ret);
 		goto clean_up_resources;
+	}
 
+	pr_err("rproc_fw_boot: firmware boot completed successfully for %s\n",
+		rproc->name);
 	return 0;
 
 clean_up_resources:
+	pr_err("rproc_fw_boot: cleaning up resources\n");
 	rproc_resource_cleanup(rproc);
 	kfree(rproc->cached_table);
 	rproc->cached_table = NULL;
 	rproc->table_ptr = NULL;
 unprepare_rproc:
 	/* release HW resources if needed */
+	pr_err("rproc_fw_boot: unpreparing device\n");
 	rproc_unprepare_device(rproc);
 disable_iommu:
+	pr_err("rproc_fw_boot: disabling IOMMU\n");
 	rproc_disable_iommu(rproc);
 	return ret;
 }
@@ -1909,11 +1956,15 @@ int rproc_boot(struct rproc *rproc)
 
 	dev = &rproc->dev;
 
+	pr_err("rproc_boot: attempting to boot %s\n", rproc->name);
+
 	ret = mutex_lock_interruptible(&rproc->lock);
 	if (ret) {
 		dev_err(dev, "can't lock rproc %s: %d\n", rproc->name, ret);
 		return ret;
 	}
+
+	pr_err("rproc_boot: acquired lock for %s, state=%d\n", rproc->name, rproc->state);
 
 	if (rproc->state == RPROC_DELETED) {
 		ret = -ENODEV;
@@ -1923,32 +1974,47 @@ int rproc_boot(struct rproc *rproc)
 
 	/* skip the boot or attach process if rproc is already powered up */
 	if (atomic_inc_return(&rproc->power) > 1) {
+		pr_err("rproc_boot: %s already powered up (power=%d)\n",
+			rproc->name, atomic_read(&rproc->power));
 		ret = 0;
 		goto unlock_mutex;
 	}
 
 	if (rproc->state == RPROC_DETACHED) {
 		dev_info(dev, "attaching to %s\n", rproc->name);
+		pr_err("rproc_boot: calling rproc_attach for %s\n", rproc->name);
 
 		ret = rproc_attach(rproc);
 	} else {
 		dev_info(dev, "powering up %s\n", rproc->name);
+		pr_err("rproc_boot: requesting firmware for %s\n", rproc->name);
 
 		/* load firmware */
 		ret = request_firmware(&firmware_p, rproc->firmware, dev);
 		if (ret < 0) {
 			dev_err(dev, "request_firmware failed: %d\n", ret);
+			pr_err("rproc_boot: firmware request failed for %s: %d\n",
+				rproc->name, ret);
 			goto downref_rproc;
 		}
 
+		pr_err("rproc_boot: firmware loaded for %s, calling rproc_fw_boot\n",
+			rproc->name);
 		ret = rproc_fw_boot(rproc, firmware_p);
+		pr_err("rproc_boot: rproc_fw_boot returned %d for %s\n",
+			ret, rproc->name);
 
 		release_firmware(firmware_p);
 	}
 
 downref_rproc:
-	if (ret)
+	if (ret) {
+		pr_err("rproc_boot: boot failed for %s, decrementing power\n",
+			rproc->name);
 		atomic_dec(&rproc->power);
+	} else {
+		pr_err("rproc_boot: boot succeeded for %s\n", rproc->name);
+	}
 unlock_mutex:
 	mutex_unlock(&rproc->lock);
 	return ret;
@@ -1981,40 +2047,59 @@ int rproc_shutdown(struct rproc *rproc)
 	struct device *dev = &rproc->dev;
 	int ret;
 
+	pr_err("rproc_shutdown: attempting to shutdown %s\n", rproc->name);
+
 	ret = mutex_lock_interruptible(&rproc->lock);
 	if (ret) {
 		dev_err(dev, "can't lock rproc %s: %d\n", rproc->name, ret);
 		return ret;
 	}
 
+	pr_err("rproc_shutdown: acquired lock for %s, state=%d\n",
+		rproc->name, rproc->state);
+
 	if (rproc->state != RPROC_RUNNING &&
 	    rproc->state != RPROC_ATTACHED) {
 		ret = -EINVAL;
+		pr_err("rproc_shutdown: invalid state %d for %s\n",
+			rproc->state, rproc->name);
 		goto out;
 	}
 
 	/* if the remote proc is still needed, bail out */
-	if (!atomic_dec_and_test(&rproc->power))
+	if (!atomic_dec_and_test(&rproc->power)) {
+		pr_err("rproc_shutdown: %s still in use (power=%d)\n",
+			rproc->name, atomic_read(&rproc->power));
 		goto out;
+	}
 
+	pr_err("rproc_shutdown: stopping %s\n", rproc->name);
 	ret = rproc_stop(rproc, false);
 	if (ret) {
+		pr_err("rproc_shutdown: rproc_stop failed for %s: %d\n",
+			rproc->name, ret);
 		atomic_inc(&rproc->power);
 		goto out;
 	}
 
 	/* clean up all acquired resources */
+	pr_err("rproc_shutdown: cleaning up resources for %s\n", rproc->name);
 	rproc_resource_cleanup(rproc);
 
 	/* release HW resources if needed */
+	pr_err("rproc_shutdown: unpreparing device for %s\n", rproc->name);
 	rproc_unprepare_device(rproc);
 
+	pr_err("rproc_shutdown: disabling IOMMU for %s\n", rproc->name);
 	rproc_disable_iommu(rproc);
 
 	/* Free the copy of the resource table */
+	pr_err("rproc_shutdown: freeing cached table for %s\n", rproc->name);
 	kfree(rproc->cached_table);
 	rproc->cached_table = NULL;
 	rproc->table_ptr = NULL;
+
+	pr_err("rproc_shutdown: shutdown completed for %s\n", rproc->name);
 out:
 	mutex_unlock(&rproc->lock);
 	return ret;
