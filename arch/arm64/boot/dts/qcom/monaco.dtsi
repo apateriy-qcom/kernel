@@ -2474,6 +2474,8 @@
 
 			#phy-cells = <0>;
 
+			refgen-supply = <&refgen>;
+
 			status = "disabled";
 		};
 
@@ -2662,6 +2664,8 @@
 			clock-output-names = "pcie_1_pipe_clk";
 
 			#phy-cells = <0>;
+
+			refgen-supply = <&refgen>;
 
 			status = "disabled";
 		};
